@@ -1,6 +1,5 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <WiFi.h>
 #include <WebServer.h>
 #include <EEPROM.h>
 #include <ArduinoJson.h>
@@ -9,7 +8,7 @@
 #include "version.h"   // file sinh tự động từ script
 #include <Update.h>
 
-#define EEPROM_SIZE 128
+#define EEPROM_SIZE 192
 // Ví dụ sử dụng UART2 trên ESP32 với GPIO26 (RX) và GPIO27 (TX) 
 #define RXD2 26 
 #define TXD2 27
@@ -25,8 +24,8 @@
 #define LED_QC 2
 #define LED_SAFETY 15
 const int IT_PIN = 14;
-const char* ssid_ota = "LDV_Inno";
-const char* password_ota = "1NNovation!";
+String otassid = "LDV_Inno";
+String otapassword = "1NNovation!";
 const char* firmware_url = "https://raw.githubusercontent.com/MangoGuy-08032025/CKA_IOT_OTA_0/main/SEOV_SLave_UART_2_OTA.ino.bin";       
 const char* version_url  = "https://raw.githubusercontent.com/MangoGuy-08032025/CKA_IOT_OTA_0/main/version.txt";
 String ota_result = "";
@@ -40,6 +39,7 @@ String password = "";
 String deviceID = "";
 String ServerIP = "";
 String Status = "STT";
+int EEPROM_EMTY = 0;
 unsigned long cycle;
 unsigned long startMillis[5] = {0}; 
 unsigned long pressStart[5] = {0}; 
@@ -67,9 +67,11 @@ void handleRoot() {
   html += "<h1>Device Setting</h1>";
   html += "<form action='/save' method='POST'>";
   html += "Device ID: <input type='text' name='id' value='" + deviceID + "'><br>";
-  html += "WiFi SSID: <input type='text' name='ssid' value='" + ssid + "'><br>";
-  html += "Password: <input type='text' name='pass' value='" + password + "'><br>"; // không ẩn mật khẩu nữa
+  html += "Working WiFi SSID: <input type='text' name='ssid' value='" + ssid + "'><br>";
+  html += "Working Wifi Password: <input type='text' name='pass' value='" + password + "'><br>"; // không ẩn mật khẩu nữa
   html += "Server IP: <input type='text' name='serverip' value='" + ServerIP + "'><br>"; // không ẩn mật khẩu nữa
+  html += "OTA Wifi SSID: <input type='text' name='otassid' value='" + otassid + "'><br>"; // không ẩn mật khẩu nữa
+  html += "OTA Wifi Password: <input type='text' name='otapass' value='" + otapassword + "'><br>"; // không ẩn mật khẩu nữa
   html += "<input type='submit' value='Save'>";
   html += "</form>";
   
@@ -82,11 +84,15 @@ void handleSave() {
   ssid = server.arg("ssid");
   password = server.arg("pass");
   ServerIP = server.arg("serverip");
+  otassid = server.arg("otassid");
+  otapassword = server.arg("otapassword");
   // Lưu vào EEPROM
   EEPROM.writeString(0, deviceID);
   EEPROM.writeString(32, ssid);
   EEPROM.writeString(64, password);
   EEPROM.writeString(96, ServerIP);
+  EEPROM.writeString(128, otassid);
+  EEPROM.writeString(160, otapassword);
   EEPROM.commit();
   server.send(200, "text/html", "<h1>Saved! Restart ESP32</h1>");
   ESP.restart();
@@ -133,8 +139,62 @@ void checkAndUpdateFirmware() {
       }
       http.end();
 }
+void load_config()
+{
+  deviceID = EEPROM.readString(0);
+  ssid     = EEPROM.readString(32);
+  password = EEPROM.readString(64);
+  ServerIP = EEPROM.readString(96);
+  otassid     = EEPROM.readString(128);
+  otapassword = EEPROM.readString(160);
+  // Nếu rỗng thì gán "Nodata"
+  if (deviceID == "") 
+  {
+    deviceID = DEVICE_ID_DEFAULT;
+    EEPROM.writeString(0, deviceID);
+    EEPROM_EMTY = 1;
+  }
+  if (ssid == "")
+  {
+    ssid = SSID_DEFAULT;
+    EEPROM.writeString(32, ssid);
+    EEPROM_EMTY = 1;
+  }     
+  if (password == "") 
+  {
+    password = PASSWORD_DEFAULT;
+    EEPROM.writeString(64, password);
+    EEPROM_EMTY = 1;
+  }
+  if (ServerIP == "") 
+  {
+    ServerIP = SERVER_IP_DEFAULT;
+    EEPROM.writeString(96, ServerIP);
+    EEPROM_EMTY = 1;
+  }
+  if (otassid == "")
+  {
+    otassid = OTA_SSID_DEFAULT;
+    EEPROM.writeString(128, otassid);
+    EEPROM_EMTY = 1;
+  }     
+  if (otapassword == "") 
+  {
+    otapassword = OTA_PASSWORD_DEFAULT;
+    EEPROM.writeString(160, otapassword);
+    EEPROM_EMTY = 1;
+  }
+  if (EEPROM_EMTY == 1)
+  {
+    EEPROM.commit();
+    ESP.restart();
+  }
+}
 void setup() {
   for (int i=0; i<5; i++) pinMode(buttonPins[i], INPUT);
+    // Đọc dữ liệu EEPROM trước
+  EEPROM.begin(EEPROM_SIZE);
+  load_config();
   Serial.begin(115200);
   Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
   pinMode(IT_PIN, INPUT_PULLUP);
@@ -148,13 +208,13 @@ void setup() {
   // Kiểm tra nút IT
   if (digitalRead(IT_PIN) == LOW) {
     lcd.setCursor(0,0);
-    WiFi.begin(ssid_ota, password_ota);
+    WiFi.begin(otassid, otapassword);
     lcd.clear();
     while (WiFi.status() != WL_CONNECTED) {
       lcd.setCursor(0, 0);
-      lcd.print("Wifi:"+ String(ssid_ota));
+      lcd.print("Wifi:"+ String(otassid));
       lcd.setCursor(0, 1);
-      lcd.print("Pass:"+ String(password_ota));
+      lcd.print("Pass:"+ String(otapassword));
       delay(2000);
     }
     lcd.clear();
@@ -166,18 +226,7 @@ void setup() {
     lcd.print(ota_result);
     delay(5000);
   }
-  // Đọc dữ liệu EEPROM trước
-  EEPROM.begin(EEPROM_SIZE);
-  deviceID = EEPROM.readString(0);
-  ssid     = EEPROM.readString(32);
-  password = EEPROM.readString(64);
-  ServerIP = EEPROM.readString(96);
 
-  // Nếu rỗng thì gán "Nodata"
-  if (deviceID == "") deviceID = "1";
-  if (ssid == "")     ssid     = "Anh Linh";
-  if (password == "") password = "08032025";
-  if (ServerIP == "") ServerIP = "192.168.0.1/5000";
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("Press PE");
@@ -439,16 +488,20 @@ void update_by_Serial()
       }
 
       // Kiểm tra đủ 5 trường
-      if (index == 4) 
+      if (index == 6) 
       {
         deviceID = fields[0];
         ssid     = fields[1];
         password = fields[2];
         ServerIP = fields[3];
+        otassid     = fields[4];
+        otapassword = fields[5];        
         EEPROM.writeString(0, deviceID);
         EEPROM.writeString(32, ssid);
         EEPROM.writeString(64, password);
         EEPROM.writeString(96, ServerIP);
+        EEPROM.writeString(128, otassid);
+        EEPROM.writeString(160, otapassword);
         EEPROM.commit();
         Serial2.println("Setup thành công");
         // ESP.restart();
