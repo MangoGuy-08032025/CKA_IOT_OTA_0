@@ -560,9 +560,7 @@ void downloadAndApplyFirmware() {
         Serial2.println("OTA update successful, restarting...");
         delay(2000);
         ESP.restart();
-      } 
-      else 
-      {
+      } else {
         Serial2.println("OTA update failed");
       }
     } else {
