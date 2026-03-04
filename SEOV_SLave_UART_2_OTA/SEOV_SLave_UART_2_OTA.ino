@@ -128,11 +128,14 @@ void checkAndUpdateFirmware() {
           switch (ret) {
             case HTTP_UPDATE_FAILED:
               Serial.printf("Update failed: %s\n", httpUpdate.getLastErrorString().c_str());
+              ota_result = "Update failed";
               break;
             case HTTP_UPDATE_NO_UPDATES:
               Serial.println("No update available");
+              ota_result = "No update";
               break;
             case HTTP_UPDATE_OK:
+              ota_result = "Successfully";
               Serial.println("Update successful, rebooting...");
               break;
           }
@@ -146,17 +149,17 @@ void checkAndUpdateFirmware() {
 }
 void setup() {
   for (int i=0; i<5; i++) pinMode(buttonPins[i], INPUT);
+  pinMode(IT_PIN, INPUT_PULLUP);
+  lcd.begin(16, 2);
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Version:");
+  lcd.print("Version: ");
   lcd.setCursor(0, 1);
   lcd.print(FW_VERSION);
   delay(2000);
-  pinMode(IT_PIN, INPUT_PULLUP);
   // Kiểm tra nút IT
   if (digitalRead(IT_PIN) == LOW) {
     lcd.setCursor(0,0);
-
     WiFi.begin(ssid_ota, password_ota);
     lcd.clear();
     while (WiFi.status() != WL_CONNECTED) {
@@ -171,15 +174,10 @@ void setup() {
     lcd.print("Updating code...");
     checkAndUpdateFirmware();  // gọi hàm OTA
     lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("ota_result");
+    lcd.setCursor(0, 1);
+    lcd.print(ota_result);
     delay(5000);
   }
-  else 
-  {
-    Serial.println("IT button not pressed -> Skip OTA");
-  }
-  lcd.begin(16, 2);
   // Đọc dữ liệu EEPROM trước
   EEPROM.begin(EEPROM_SIZE);
   deviceID = EEPROM.readString(0);
