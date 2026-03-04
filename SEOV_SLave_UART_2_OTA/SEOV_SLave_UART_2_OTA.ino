@@ -6,6 +6,7 @@
 #include <ArduinoJson.h>
 #include <LiquidCrystal.h>
 #include <HTTPUpdate.h>
+#include "version.h"   // file sinh tự động từ script
 
 #define EEPROM_SIZE 128
 // Ví dụ sử dụng UART2 trên ESP32 với GPIO26 (RX) và GPIO27 (TX) 
@@ -24,6 +25,12 @@
 #define LED_QC 2
 #define LED_SAFETY 15
 
+const int IT_PIN = 14;
+const char* ssid_ota = "LDV_Inno";
+const char* password_ota = "1NNovation!";
+const char* firmware_url = "https://raw.githubusercontent.com/MangoGuy-08032025/CKA_IOT_OTA_0/main/SEOV_SLave_UART_2_OTA.ino.bin";
+const char* version_url  = "https://raw.githubusercontent.com/MangoGuy-08032025/CKA_IOT_OTA_0/main/version.txt";
+String ota_result = "";
 int rssi = 0;
 int deviceID_int = 1;
 String timeout = "";
@@ -100,9 +107,78 @@ void WiFiEvent(WiFiEvent_t event, arduino_event_info_t info) {
   }
 }
 
+void checkAndUpdateFirmware() {
+      HTTPClient http;
+      http.begin(version_url);
+      int httpCode = http.GET();
+
+      if (httpCode == 200) {
+        String newVersion = http.getString();
+        newVersion.trim();
+
+        Serial.printf("Current version: %s, New version: %s\n", FW_VERSION, newVersion.c_str());
+
+        if (newVersion != FW_VERSION) {
+          Serial.println("New version available -> Start OTA update");
+          lcd.setCursor(0, 1);
+          lcd.print("V:"+ newVersion);
+          WiFiClient client;  // cần thêm đối tượng này
+          t_httpUpdate_return ret = httpUpdate.update(client, firmware_url);
+
+          switch (ret) {
+            case HTTP_UPDATE_FAILED:
+              Serial.printf("Update failed: %s\n", httpUpdate.getLastErrorString().c_str());
+              break;
+            case HTTP_UPDATE_NO_UPDATES:
+              Serial.println("No update available");
+              break;
+            case HTTP_UPDATE_OK:
+              Serial.println("Update successful, rebooting...");
+              break;
+          }
+        } else {
+          Serial.println("Already up-to-date -> Skip OTA");
+        }
+      } else {
+        Serial.printf("Failed to fetch version file, HTTP code: %d\n", httpCode);
+      }
+      http.end();
+}
 void setup() {
   for (int i=0; i<5; i++) pinMode(buttonPins[i], INPUT);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Version:");
+  lcd.setCursor(0, 1);
+  lcd.print(FW_VERSION);
+  delay(2000);
+  pinMode(IT_PIN, INPUT_PULLUP);
+  // Kiểm tra nút IT
+  if (digitalRead(IT_PIN) == LOW) {
+    lcd.setCursor(0,0);
 
+    WiFi.begin(ssid_ota, password_ota);
+    lcd.clear();
+    while (WiFi.status() != WL_CONNECTED) {
+      lcd.setCursor(0, 0);
+      lcd.print("Wifi:"+ String(ssid_ota));
+      lcd.setCursor(0, 1);
+      lcd.print("Pass:"+ String(password_ota));
+      delay(2000);
+    }
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Updating code...");
+    checkAndUpdateFirmware();  // gọi hàm OTA
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("ota_result");
+    delay(5000);
+  }
+  else 
+  {
+    Serial.println("IT button not pressed -> Skip OTA");
+  }
   lcd.begin(16, 2);
   // Đọc dữ liệu EEPROM trước
   EEPROM.begin(EEPROM_SIZE);
@@ -140,7 +216,6 @@ void setup() {
       server.handleClient();
     }
   }
-
 
   lcd.clear();
   lcd.setCursor(0,0);
