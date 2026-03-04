@@ -1,4 +1,4 @@
-#define FW_VERSION "26.3.4.15.24"
+#define FW_VERSION "26.3.4.15.33"
 #define DEVICE_ID_DEFAULT "1"
 #define SSID_DEFAULT "Linh Anh"
 #define PASSWORD_DEFAULT "08032025"
