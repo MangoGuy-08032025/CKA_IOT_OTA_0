@@ -24,8 +24,8 @@
 #define LED_QC 2
 #define LED_SAFETY 15
 const int IT_PIN = 14;
-String otassid = "LDV_Inno";
-String otapassword = "1NNovation!";
+String otassid = "";
+String otapassword = "";
 const char* firmware_url = "https://raw.githubusercontent.com/MangoGuy-08032025/CKA_IOT_OTA_0/main/SEOV_SLave_UART_2_OTA.ino.bin";       
 const char* version_url  = "https://raw.githubusercontent.com/MangoGuy-08032025/CKA_IOT_OTA_0/main/version.txt";
 String ota_result = "";
