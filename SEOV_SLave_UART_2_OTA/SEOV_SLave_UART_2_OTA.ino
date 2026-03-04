@@ -28,7 +28,7 @@
 const int IT_PIN = 14;
 const char* ssid_ota = "LDV_Inno";
 const char* password_ota = "1NNovation!";
-const char* firmware_url = "https://raw.githubusercontent.com/MangoGuy-08032025/CKA_IOT_OTA_0/main/SEOV_SLave_UART_2_OTA.ino.bin";
+const char* firmware_url = "https://raw.githubusercontent.com/MangoGuy-08032025/CKA_IOT_OTA_0/main/SEOV_SLave_UART_2_OTA.ino.bin";       
 const char* version_url  = "https://raw.githubusercontent.com/MangoGuy-08032025/CKA_IOT_OTA_0/main/version.txt";
 String ota_result = "";
 int rssi = 0;
@@ -116,10 +116,10 @@ void checkAndUpdateFirmware() {
         String newVersion = http.getString();
         newVersion.trim();
 
-        Serial.printf("Current version: %s, New version: %s\n", FW_VERSION, newVersion.c_str());
+        Serial2.printf("Current version: %s, New version: %s\n", FW_VERSION, newVersion.c_str());
 
         if (newVersion != FW_VERSION) {
-          Serial.println("New version available -> Start OTA update");
+          Serial2.println("New version available -> Start OTA update");
           lcd.setCursor(0, 1);
           lcd.print("V:"+ newVersion);
           WiFiClient client;  // cần thêm đối tượng này
@@ -127,28 +127,32 @@ void checkAndUpdateFirmware() {
 
           switch (ret) {
             case HTTP_UPDATE_FAILED:
-              Serial.printf("Update failed: %s\n", httpUpdate.getLastErrorString().c_str());
-              ota_result = "Update failed";
+              Serial2.printf("Update failed: %s\n", httpUpdate.getLastErrorString().c_str());
+              ota_result = httpUpdate.getLastErrorString().c_str();
               break;
             case HTTP_UPDATE_NO_UPDATES:
-              Serial.println("No update available");
+              Serial2.println("No update available");
               ota_result = "No update";
               break;
             case HTTP_UPDATE_OK:
               ota_result = "Successfully";
-              Serial.println("Update successful, rebooting...");
+              Serial2.println("Update successful, rebooting...");
               break;
           }
         } else {
-          Serial.println("Already up-to-date -> Skip OTA");
+          Serial2.println("Already up-to-date -> Skip OTA");
+          ota_result = "No newer version";
         }
       } else {
-        Serial.printf("Failed to fetch version file, HTTP code: %d\n", httpCode);
+        Serial2.printf("Failed to fetch version file, HTTP code: %d\n", httpCode);
+        ota_result = "Failed to fetch";
       }
       http.end();
 }
 void setup() {
   for (int i=0; i<5; i++) pinMode(buttonPins[i], INPUT);
+  Serial.begin(115200);
+  Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
   pinMode(IT_PIN, INPUT_PULLUP);
   lcd.begin(16, 2);
   lcd.clear();
@@ -267,7 +271,7 @@ void setup() {
   }
   // Kiểm tra chân 34
   WiFi.onEvent(WiFiEvent);
-  Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
+  
   for (int i = 0; i < 5; i++) {
     pinMode(ledPins[i], OUTPUT);
   }
