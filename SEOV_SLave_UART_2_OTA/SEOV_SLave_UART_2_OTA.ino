@@ -7,12 +7,12 @@
 #include <LiquidCrystal.h>
 #include <HTTPUpdate.h>
 #include "version.h"   // file sinh tự động từ script
+#include <Update.h>
 
 #define EEPROM_SIZE 128
 // Ví dụ sử dụng UART2 trên ESP32 với GPIO26 (RX) và GPIO27 (TX) 
 #define RXD2 26 
 #define TXD2 27
-
 #define ME 25
 #define PE 33
 #define IT 32
@@ -24,7 +24,6 @@
 #define LED_IT 4
 #define LED_QC 2
 #define LED_SAFETY 15
-
 const int IT_PIN = 14;
 const char* ssid_ota = "LDV_Inno";
 const char* password_ota = "1NNovation!";
@@ -117,28 +116,13 @@ void checkAndUpdateFirmware() {
         newVersion.trim();
 
         Serial2.printf("Current version: %s, New version: %s\n", FW_VERSION, newVersion.c_str());
-
+        rssi = WiFi.RSSI(); // đơn vị dBm
+        Serial2.print("Wifi:"); Serial2.println(rssi);
         if (newVersion != FW_VERSION) {
           Serial2.println("New version available -> Start OTA update");
           lcd.setCursor(0, 1);
           lcd.print("V:"+ newVersion);
-          WiFiClient client;  // cần thêm đối tượng này
-          t_httpUpdate_return ret = httpUpdate.update(client, firmware_url);
-
-          switch (ret) {
-            case HTTP_UPDATE_FAILED:
-              Serial2.printf("Update failed: %s\n", httpUpdate.getLastErrorString().c_str());
-              ota_result = httpUpdate.getLastErrorString().c_str();
-              break;
-            case HTTP_UPDATE_NO_UPDATES:
-              Serial2.println("No update available");
-              ota_result = "No update";
-              break;
-            case HTTP_UPDATE_OK:
-              ota_result = "Successfully";
-              Serial2.println("Update successful, rebooting...");
-              break;
-          }
+          downloadAndApplyFirmware();
         } else {
           Serial2.println("Already up-to-date -> Skip OTA");
           ota_result = "No newer version";
@@ -208,8 +192,6 @@ void setup() {
     lcd.setCursor(0,1);
     lcd.print("IP:192.168.4.1");
     WiFi.softAP("ESP32", "12345678");
-    // Serial.println("⚠️ Vào chế độ cấu hình (CONFIG MODE)");
-    // Serial.println("AP IP: " + WiFi.softAPIP().toString());
     server.on("/", handleRoot);
     server.on("/save", HTTP_POST, handleSave);
     server.begin();
@@ -559,6 +541,100 @@ bool sendUpdate(int buttonIndex, int value) {
   return false;
 }
 
+
+void downloadAndApplyFirmware() {
+  HTTPClient http;
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.begin(firmware_url);
+
+  int httpCode = http.GET();
+  Serial2.printf("HTTP GET code: %d\n", httpCode);
+
+  if (httpCode == HTTP_CODE_OK) {
+    int contentLength = http.getSize();
+    Serial2.printf("Firmware size: %d bytes\n", contentLength);
+
+    if (contentLength > 0) {
+      WiFiClient* stream = http.getStreamPtr();
+      if (startOTAUpdate(stream, contentLength)) {
+        Serial2.println("OTA update successful, restarting...");
+        delay(2000);
+        ESP.restart();
+      } 
+      else 
+      {
+        Serial2.println("OTA update failed");
+      }
+    } else {
+      Serial2.println("Invalid firmware size");
+    }
+  }
+  else 
+  {
+    Serial2.printf("Failed to fetch firmware. HTTP code: %d\n", httpCode);
+  }
+  http.end();
+}
+
+
+bool startOTAUpdate(WiFiClient* client, int contentLength) {
+  Serial2.println("Initializing update...");
+  if (!Update.begin(contentLength)) {
+    Serial2.printf("Update begin failed: %s\n", Update.errorString());
+    return false;
+  }
+
+  Serial2.println("Writing firmware...");
+  size_t written = 0;
+  int progress = 0;
+  int lastProgress = 0;
+
+  // Timeout variables
+  const unsigned long timeoutDuration = 120*1000;  // 10 seconds timeout
+  unsigned long lastDataTime = millis();
+
+  while (written < contentLength) {
+    if (client->available())
+    {
+      uint8_t buffer[128];
+      size_t len = client->read(buffer, sizeof(buffer));
+      if (len > 0) {
+        Update.write(buffer, len);
+        written += len;
+
+        // Calculate and print progress
+        progress = (written * 100) / contentLength;
+        if (progress != lastProgress) {
+          Serial2.printf("Writing Progress: %d%%\n", progress);
+          lastProgress = progress;
+        }
+      }
+    }
+    // Check for timeout
+    if (millis() - lastDataTime > timeoutDuration) {
+      Serial2.println("Timeout: No data received for too long. Aborting update...");
+      Update.abort();
+      return false;
+    }
+
+    yield();
+  }
+  Serial2.println("\nWriting complete");
+
+  if (written != contentLength) {
+    Serial2.printf("Error: Write incomplete. Expected %d but got %d bytes\n", contentLength, written);
+    Update.abort();
+    return false;
+  }
+
+  if (!Update.end()) {
+    Serial2.printf("Error: Update end failed: %s\n", Update.errorString());
+    return false;
+  }
+
+  Serial2.println("Update successfully completed");
+  return true;
+}
 // ---Bước 0: chưa ấn gì, đèn tắt
 // ---Bước 1: Sau khi ấn nút lần 1, đèn sáng
 // ---Bước 2: Sau khi ghi thành công 1 lên Server, đèn sáng
