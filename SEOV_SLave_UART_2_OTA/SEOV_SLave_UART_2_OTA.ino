@@ -215,7 +215,7 @@ void setup() {
       lcd.print("Wifi:"+ String(otassid));
       lcd.setCursor(0, 1);
       lcd.print("Pass:"+ String(otapassword));
-      delay(2000);
+      update_by_Serial();
     }
     lcd.clear();
     lcd.setCursor(0, 0);
@@ -323,6 +323,12 @@ void setup() {
     }
     lcd.clear();
     lcd.setCursor(0, 0);
+    lcd.print("OTA:" + otassid);
+    lcd.setCursor(0, 1);
+    lcd.print("PASS:" + otapassword);
+    delay(2000);
+    lcd.clear();
+    lcd.setCursor(0, 0);
     lcd.print("Server IP:");
     lcd.setCursor(0, 1);
     lcd.print(ServerIP);
@@ -352,7 +358,7 @@ void loop()
       states[i] = 1;
       delay(100);
       while(digitalRead(buttonPins[i]) == LOW);
-      delay(500);
+      delay(1000);
     }
     // ---- Cố gắng ghi 1 lên server ----
     if (states[i] == 1)
@@ -374,7 +380,7 @@ void loop()
         rssi = WiFi.RSSI(); // đơn vị dBm
         delay(100);
         while(digitalRead(buttonPins[i]) == LOW);
-        delay(500);
+        delay(1000);
       }
     }
 
@@ -399,7 +405,7 @@ void loop()
         states[i] = 5;
         delay(100);
         while(digitalRead(buttonPins[i]) == LOW);
-        delay(500);
+        delay(1000);
       }
     }
 
@@ -464,14 +470,14 @@ void update_by_Serial()
     // Nếu nhận "Data ?"
     if (input.equalsIgnoreCase("Data?")) 
     {
-      String packet = deviceID + ";;" + ssid + ";;" + password + ";;" + ServerIP;
+      String packet = deviceID + ";;" + ssid + ";;" + password + ";;" + ServerIP + ";;" + otassid + ";;" + otapassword;
       Serial2.println(packet);
     }
     else 
     {
       // Nhận gói tin từ ứng dụng
-      // Ví dụ: "ESP32_001;;MyWiFi;;12345678;;192.168.1.100/5000"
-      String fields[4];
+      // Ví dụ: "ESP32_001;;MyWiFi;;12345678;;192.168.1.100:5000"
+      String fields[6];
       int index = 0;
       int lastPos = 0;
       while (true) 
@@ -483,7 +489,7 @@ void update_by_Serial()
         } else {
           fields[index++] = input.substring(lastPos, pos);
           lastPos = pos + 2;
-          if (index >= 5) break;
+          if (index >= 7) break;
         }
       }
 
