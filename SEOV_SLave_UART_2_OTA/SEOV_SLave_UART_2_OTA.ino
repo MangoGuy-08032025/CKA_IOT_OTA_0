@@ -197,7 +197,6 @@ void setup() {
   load_config();
   Serial.begin(115200);
   Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
-  pinMode(IT_PIN, INPUT_PULLUP);
   lcd.begin(16, 2);
   lcd.clear();
   lcd.setCursor(0, 0);
@@ -206,7 +205,7 @@ void setup() {
   lcd.print(FW_VERSION);
   delay(2000);
   // Kiểm tra nút IT
-  if (digitalRead(IT_PIN) == LOW) {
+  if (digitalRead(IT) == LOW) {
     lcd.setCursor(0,0);
     WiFi.begin(otassid, otapassword);
     lcd.clear();
@@ -355,10 +354,11 @@ void loop()
     if ((digitalRead(buttonPins[i]) == LOW) && (states[i] == 0) )
     {
       digitalWrite(ledPins[i], HIGH);
-      states[i] = 1;
-      delay(100);
-      while(digitalRead(buttonPins[i]) == LOW);
-      delay(1000);
+      delay(10);
+      if(digitalRead(buttonPins[i]) == LOW)
+      {
+        states[i] = 1;
+      }
     }
     // ---- Cố gắng ghi 1 lên server ----
     if (states[i] == 1)
@@ -366,21 +366,21 @@ void loop()
       if (sendUpdate(i, 1) == true) 
       {
         states[i] = 2;
+        delay(100);
+        while(digitalRead(buttonPins[i]) == LOW);
+        delay(500);
       }
     }
     // --- Nhấn lần thứ 2 ---
     if ((digitalRead(buttonPins[i]) == LOW) && (states[i] == 2)) 
     {
+      delay(10);
       digitalWrite(ledPins[i], LOW);
-      delay(100);
       if (digitalRead(buttonPins[i]) == LOW ) 
       {
         states[i] = 3;
         // Lấy cường độ tín hiệu WiFi
         rssi = WiFi.RSSI(); // đơn vị dBm
-        delay(100);
-        while(digitalRead(buttonPins[i]) == LOW);
-        delay(1000);
       }
     }
 
@@ -390,6 +390,9 @@ void loop()
       if (sendUpdate(i, 2) == true) 
       {
         states[i] = 4;
+        delay(100);
+        while(digitalRead(buttonPins[i]) == LOW);
+        delay(500);
       }
     }
 
@@ -403,9 +406,6 @@ void loop()
         // Lấy cường độ tín hiệu WiFi
         rssi = WiFi.RSSI(); // đơn vị dBm
         states[i] = 5;
-        delay(100);
-        while(digitalRead(buttonPins[i]) == LOW);
-        delay(1000);
       }
     }
 
@@ -415,6 +415,9 @@ void loop()
       if (sendUpdate(i, 0)  == true ) 
       {
         states[i] = 0;
+        delay(100);
+        while(digitalRead(buttonPins[i]) == LOW);
+        delay(500);
       }   
     }
   }
