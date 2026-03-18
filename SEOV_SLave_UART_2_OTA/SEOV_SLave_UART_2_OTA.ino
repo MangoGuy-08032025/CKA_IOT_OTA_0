@@ -374,8 +374,8 @@ void loop()
     // --- Nhấn lần thứ 2 ---
     if ((digitalRead(buttonPins[i]) == LOW) && (states[i] == 2)) 
     {
-      delay(10);
       digitalWrite(ledPins[i], LOW);
+      delay(10);
       if (digitalRead(buttonPins[i]) == LOW ) 
       {
         states[i] = 3;
@@ -435,7 +435,7 @@ void loop()
     else if ((states[i] == 3) ||  (states[i] == 4))
     {
       // Lấy số nguyên sau khi chia cho 5000
-      unsigned long cycle = (millis() /500);
+      unsigned long cycle = (millis() /200);
       if (cycle % 2 == 0) 
       {
         digitalWrite(ledPins[i], HIGH);  // chẵn → LED sáng
