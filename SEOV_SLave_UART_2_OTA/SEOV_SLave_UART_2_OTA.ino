@@ -85,7 +85,7 @@ void handleSave() {
   password = server.arg("pass");
   ServerIP = server.arg("serverip");
   otassid = server.arg("otassid");
-  otapassword = server.arg("otapassword");
+  otapassword = server.arg("otapass");
   // Lưu vào EEPROM
   EEPROM.writeString(0, deviceID);
   EEPROM.writeString(32, ssid);
