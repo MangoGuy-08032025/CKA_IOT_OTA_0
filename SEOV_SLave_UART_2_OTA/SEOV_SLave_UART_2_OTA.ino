@@ -153,51 +153,90 @@ void load_config()
     deviceID = DEVICE_ID_DEFAULT;
     EEPROM.writeString(0, deviceID);
     EEPROM_EMTY = 1;
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Write ID to ROM:");
+    lcd.setCursor(0, 1);
+    lcd.print(deviceID);    
+    delay(2000);
   }
   if (ssid == "")
   {
     ssid = SSID_DEFAULT;
     EEPROM.writeString(32, ssid);
     EEPROM_EMTY = 1;
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Write SSID:");
+    lcd.setCursor(0, 1);
+    lcd.print(ssid);    
+    delay(2000);
   }     
   if (password == "") 
   {
     password = PASSWORD_DEFAULT;
     EEPROM.writeString(64, password);
     EEPROM_EMTY = 1;
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Write PASS:");
+    lcd.setCursor(0, 1);
+    lcd.print(password);    
+    delay(2000);
   }
   if (ServerIP == "") 
   {
     ServerIP = SERVER_IP_DEFAULT;
     EEPROM.writeString(96, ServerIP);
     EEPROM_EMTY = 1;
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Write IP:");
+    lcd.setCursor(0, 1);
+    lcd.print(ServerIP);    
+    delay(2000);
   }
   if (otassid == "")
   {
     otassid = OTA_SSID_DEFAULT;
     EEPROM.writeString(128, otassid);
     EEPROM_EMTY = 1;
-  }     
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Write OTA SSID:");
+    lcd.setCursor(0, 1);
+    lcd.print(otassid);    
+    delay(2000);
+  }
+
   if (otapassword == "") 
   {
     otapassword = OTA_PASSWORD_DEFAULT;
     EEPROM.writeString(160, otapassword);
     EEPROM_EMTY = 1;
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Write OTA PASSWORD:");
+    lcd.setCursor(0, 1);
+    lcd.print(otapassword);    
+    delay(2000);
   }
+
   if (EEPROM_EMTY == 1)
   {
     EEPROM.commit();
     ESP.restart();
   }
 }
+
 void setup() {
+  lcd.begin(16, 2);
   for (int i=0; i<5; i++) pinMode(buttonPins[i], INPUT);
-    // Đọc dữ liệu EEPROM trước
+  // Đọc dữ liệu EEPROM trước
   EEPROM.begin(EEPROM_SIZE);
   load_config();
   Serial.begin(115200);
   Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
-  lcd.begin(16, 2);
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Version: ");
@@ -205,11 +244,13 @@ void setup() {
   lcd.print(FW_VERSION);
   delay(2000);
   // Kiểm tra nút IT
-  if (digitalRead(IT) == LOW) {
+  if (digitalRead(IT) == LOW) 
+  {
     lcd.setCursor(0,0);
     WiFi.begin(otassid, otapassword);
     lcd.clear();
-    while (WiFi.status() != WL_CONNECTED) {
+    while (WiFi.status() != WL_CONNECTED) 
+    {
       lcd.setCursor(0, 0);
       lcd.print("Wifi:"+ String(otassid));
       lcd.setCursor(0, 1);
@@ -302,7 +343,8 @@ void setup() {
   // Kiểm tra chân 34
   WiFi.onEvent(WiFiEvent);
   
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; i++) 
+  {
     pinMode(ledPins[i], OUTPUT);
   }
 
