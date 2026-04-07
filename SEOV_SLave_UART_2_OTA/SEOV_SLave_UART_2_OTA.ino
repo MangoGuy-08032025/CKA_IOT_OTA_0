@@ -405,6 +405,13 @@ void loop()
     // ---- Cố gắng ghi 1 lên server ----
     if (states[i] == 1)
     {
+      for (int j = 0; j < 5; j++) 
+      {
+        if (states[j] != 0) 
+        {
+          digitalWrite(ledPins[j], HIGH);
+        } 
+      }
       if (sendUpdate(i, 1) == true) 
       {
         states[i] = 2;
@@ -429,6 +436,15 @@ void loop()
     // ---- Cố gắng ghi 2 lên server ----
     if (states[i] == 3)
     {
+
+      for (int j = 0; j < 5; j++) 
+      {
+        if (states[j] != 0) 
+        {
+          digitalWrite(ledPins[j], HIGH);
+        } 
+      }
+
       if (sendUpdate(i, 2) == true) 
       {
         states[i] = 4;
@@ -441,6 +457,14 @@ void loop()
     // --- Nhấn lần thứ 3 và giữ > 1s ---
     if ((digitalRead(buttonPins[i]) == LOW) && (states[i] == 4)) 
     {
+      for (int j = 0; j < 5; j++) 
+      {
+        if (states[j] != 0) 
+        {
+          digitalWrite(ledPins[j], HIGH);
+        } 
+      }
+      digitalWrite(ledPins[i], HIGH);
       delay(1000);
       if (digitalRead(buttonPins[i]) == LOW) 
       {
@@ -454,6 +478,15 @@ void loop()
     // ---- Cố gắng ghi 0 lên server ----
     if (states[i] == 5)
     {
+
+      for (int j = 0; j < 5; j++) 
+      {
+        if (states[j] != 0) 
+        {
+          digitalWrite(ledPins[j], HIGH);
+        } 
+      }
+
       if (sendUpdate(i, 0)  == true ) 
       {
         states[i] = 0;
