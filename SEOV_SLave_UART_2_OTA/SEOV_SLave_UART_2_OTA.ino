@@ -395,6 +395,7 @@ void loop()
     // --- Nhấn lần đầu ---
     if ((digitalRead(buttonPins[i]) == LOW) && (states[i] == 0) )
     {
+      delay(10);
       int count = 0;
       for(int j = 0; j < 200; j++)
       {
@@ -402,9 +403,9 @@ void loop()
         {
           count ++;
         }
-        delay(2);
+        delay(1);
       }
-      delay(10);
+      
       if((digitalRead(buttonPins[i]) == LOW) && (count > 190))
       {
         digitalWrite(ledPins[i], HIGH);
@@ -432,6 +433,7 @@ void loop()
     // --- Nhấn lần thứ 2 ---
     if ((digitalRead(buttonPins[i]) == LOW) && (states[i] == 2)) 
     {
+      delay(10);
       int count = 0;
       for(int j = 0; j < 200; j++)
       {
@@ -439,9 +441,9 @@ void loop()
         {
           count ++;
         }
-        delay(2);
+        delay(1);
       }
-      delay(10);
+      
       if ((digitalRead(buttonPins[i]) == LOW )  && (count > 190))
       {
         digitalWrite(ledPins[i], LOW);
@@ -475,6 +477,7 @@ void loop()
     // --- Nhấn lần thứ 3 và giữ > 1s ---
     if ((digitalRead(buttonPins[i]) == LOW) && (states[i] == 4)) 
     {
+      delay(10);
       for (int j = 0; j < 5; j++) 
       {
         if (states[j] != 0) 
@@ -489,9 +492,9 @@ void loop()
         {
           count ++;
         }
-        delay(2);
+        delay(1);
       }
-      delay(1000);
+      delay(500);
       digitalWrite(ledPins[i], HIGH);
       if ((digitalRead(buttonPins[i]) == LOW) && (count > 190))
       {
