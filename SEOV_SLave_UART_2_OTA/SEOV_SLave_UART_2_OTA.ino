@@ -395,10 +395,19 @@ void loop()
     // --- Nhấn lần đầu ---
     if ((digitalRead(buttonPins[i]) == LOW) && (states[i] == 0) )
     {
-      digitalWrite(ledPins[i], HIGH);
-      delay(10);
-      if(digitalRead(buttonPins[i]) == LOW)
+      int count = 0;
+      for(int j = 0; j < 100; j++)
       {
+        if(digitalRead(buttonPins[i]) == LOW)
+        {
+          count ++;
+        }
+        delay(2);
+      }
+      delay(10);
+      if((digitalRead(buttonPins[i]) == LOW) && (count > 90))
+      {
+        digitalWrite(ledPins[i], HIGH);
         states[i] = 1;
       }
     }
@@ -423,10 +432,19 @@ void loop()
     // --- Nhấn lần thứ 2 ---
     if ((digitalRead(buttonPins[i]) == LOW) && (states[i] == 2)) 
     {
-      digitalWrite(ledPins[i], LOW);
-      delay(10);
-      if (digitalRead(buttonPins[i]) == LOW ) 
+      int count = 0;
+      for(int j = 0; j < 100; j++)
       {
+        if(digitalRead(buttonPins[i]) == LOW)
+        {
+          count ++;
+        }
+        delay(2);
+      }
+      delay(10);
+      if ((digitalRead(buttonPins[i]) == LOW )  && (count > 90))
+      {
+        digitalWrite(ledPins[i], LOW);
         states[i] = 3;
         // Lấy cường độ tín hiệu WiFi
         rssi = WiFi.RSSI(); // đơn vị dBm
@@ -464,9 +482,18 @@ void loop()
           digitalWrite(ledPins[j], HIGH);
         } 
       }
+      int count = 0;
+      for(int j = 0; j < 100; j++)
+      {
+        if(digitalRead(buttonPins[i]) == LOW)
+        {
+          count ++;
+        }
+        delay(2);
+      }
       digitalWrite(ledPins[i], HIGH);
       delay(1000);
-      if (digitalRead(buttonPins[i]) == LOW) 
+      if ((digitalRead(buttonPins[i]) == LOW) && (count > 90))
       {
         digitalWrite(ledPins[i], HIGH);
         // Lấy cường độ tín hiệu WiFi
