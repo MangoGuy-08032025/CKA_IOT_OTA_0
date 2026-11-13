@@ -1,4 +1,4 @@
-#define FW_VERSION "26.11.13.14.0"
+#define FW_VERSION "26.11.13.14.39"
 #define DEVICE_ID_DEFAULT "1"
 // #define SSID_DEFAULT "SEOV-FA1"
 // #define PASSWORD_DEFAULT "fa-SEOV@2"

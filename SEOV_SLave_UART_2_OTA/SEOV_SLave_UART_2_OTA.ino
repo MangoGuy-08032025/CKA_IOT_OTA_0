@@ -397,7 +397,7 @@ void loop()
     {
       delay(10);
       int count = 0;
-      for(int j = 0; j < 20000; j++)
+      for(int j = 0; j < 30000; j++)
       {
         if(digitalRead(buttonPins[i]) == LOW)
         {
@@ -407,7 +407,7 @@ void loop()
         // delay(1);
       }
       
-      if((digitalRead(buttonPins[i]) == LOW) && (count > 19900))
+      if((digitalRead(buttonPins[i]) == LOW) && (count > 29900))
       {
         digitalWrite(ledPins[i], HIGH);
         states[i] = 1;
@@ -436,7 +436,7 @@ void loop()
     {
       delay(10);
       int count = 0;
-      for(int j = 0; j < 20000; j++)
+      for(int j = 0; j < 30000; j++)
       {
         if(digitalRead(buttonPins[i]) == LOW)
         {
@@ -446,7 +446,7 @@ void loop()
         // delay(1);
       }
       
-      if ((digitalRead(buttonPins[i]) == LOW )  && (count > 19900))
+      if ((digitalRead(buttonPins[i]) == LOW )  && (count > 29900))
       {
         digitalWrite(ledPins[i], LOW);
         states[i] = 3;
@@ -488,7 +488,7 @@ void loop()
         } 
       }
       int count = 0;
-      for(int j = 0; j < 20000; j++)
+      for(int j = 0; j < 30000; j++)
       {
         if(digitalRead(buttonPins[i]) == LOW)
         {
@@ -499,7 +499,7 @@ void loop()
       }
       delay(500);
       digitalWrite(ledPins[i], HIGH);
-      if ((digitalRead(buttonPins[i]) == LOW) && (count > 19900))
+      if ((digitalRead(buttonPins[i]) == LOW) && (count > 29900))
       {
         digitalWrite(ledPins[i], HIGH);
         // Lấy cường độ tín hiệu WiFi
